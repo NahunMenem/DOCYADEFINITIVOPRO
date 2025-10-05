@@ -9,27 +9,34 @@ import 'widgets/consulta_entrante_modal.dart';
 // 📌 Importá chat
 import 'screens/chat_medico_screen.dart';
 
-// 🔔 Handler para notificaciones en segundo plano
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  print("📩 Notificación en background: ${message.messageId}");
-}
-
 // 👇 Clave global para usar Navigator fuera del contexto
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-void main() async {
+// 🔔 Handler para notificaciones en segundo plano
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  debugPrint("📩 Notificación en background: ${message.messageId}");
+}
+
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Inicializar Firebase
-  await Firebase.initializeApp();
-
-  // Registrar handler de background
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-  // Inicializar notificaciones (listener foreground)
-  await NotificationService.init();
-
   runApp(const DocYaApp());
+
+  // 🔥 Inicializamos Firebase/FCM después de runApp
+  _initFirebase();
+}
+
+Future<void> _initFirebase() async {
+  try {
+    await Firebase.initializeApp();
+
+    // Registrar handler de background
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+    // Inicializar notificaciones (foreground, background, openedApp)
+    await NotificationService.init();
+  } catch (e) {
+    debugPrint("❌ Error inicializando Firebase: $e");
+  }
 }
 
 class DocYaApp extends StatelessWidget {
@@ -44,7 +51,6 @@ class DocYaApp extends StatelessWidget {
         primaryColor: const Color(0xFF14B8A6),
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF14B8A6)),
       ),
-      // 👇 Arranca siempre en la pantalla de login
       home: const LoginScreenPro(),
     );
   }
@@ -62,18 +68,18 @@ class NotificationService {
       sound: true,
     );
 
-    print("🔔 Permisos: ${settings.authorizationStatus}");
+    debugPrint("🔔 Permisos notificaciones: ${settings.authorizationStatus}");
 
     // Obtener token del dispositivo
     String? token = await _messaging.getToken();
-    print("🔑 Token FCM: $token");
+    debugPrint("🔑 Token FCM: $token");
 
     // TODO: acá deberías enviar este token a tu backend
     // await tuApi.guardarFcmToken(token);
 
     // Listener para notificaciones en foreground
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print("📨 Notificación foreground: ${message.data}");
+      debugPrint("📨 Notificación foreground: ${message.data}");
 
       // 👇 Si es consulta nueva
       if (message.data["tipo"] == "consulta_nueva") {
@@ -96,13 +102,13 @@ class NotificationService {
             SnackBar(content: Text("💬 Nuevo mensaje en consulta $consultaId")),
           );
 
-          // Opcional: abrir chat directamente si estás en foreground
+          // 👉 Opcional: abrir chat directamente si estás en foreground
           // navigatorKey.currentState!.push(
           //   MaterialPageRoute(
           //     builder: (context) => ChatMedicoScreen(
           //       consultaId: consultaId,
           //       medicoId: int.tryParse(remitenteId) ?? 0,
-          //       nombreMedico: "Dr. $remitenteId", // 👈 agregado
+          //       nombreMedico: "Dr. $remitenteId",
           //     ),
           //   ),
           // );
@@ -121,7 +127,7 @@ class NotificationService {
               builder: (context) => ChatMedicoScreen(
                 consultaId: consultaId,
                 medicoId: int.tryParse(remitenteId) ?? 0,
-                nombreMedico: "Dr. $remitenteId", // 👈 agregado
+                nombreMedico: "Dr. $remitenteId",
               ),
             ),
           );

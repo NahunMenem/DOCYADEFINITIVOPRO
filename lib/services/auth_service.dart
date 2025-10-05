@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  // URL del backend en Railway
+  // 🌐 URL del backend en Railway
   static const String BASE_URL =
       'https://docya-railway-production.up.railway.app';
 
@@ -15,16 +15,20 @@ class AuthService {
   Future<void> saveToken(String key, String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(key, token);
+    print("💾 Token guardado [$key]");
   }
 
   Future<String?> getToken(String key) async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(key);
+    final token = prefs.getString(key);
+    print("🔑 Token leído [$key]: $token");
+    return token;
   }
 
   Future<void> clearToken(String key) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(key);
+    print("🗑️ Token eliminado [$key]");
   }
 
   /// Login paciente
@@ -37,18 +41,28 @@ class AuthService {
         body: jsonEncode({'email': email, 'password': password}),
       );
 
+      print("📡 Respuesta cruda loginPaciente (${res.statusCode}): ${res.body}");
+
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
+        if (data['access_token'] == null) {
+          print("❌ Backend no devolvió access_token en loginPaciente");
+          return null;
+        }
+
         await saveToken("auth_token", data['access_token']);
-        return {
+        final result = {
           "access_token": data['access_token'],
           "user_id": data['user']['id'].toString(),
           "full_name": data['user']['full_name'],
         };
+        print("✅ loginPaciente parseado: $result");
+        return result;
       }
+      print("❌ Error backend loginPaciente: ${res.statusCode} - ${res.body}");
       return null;
     } catch (e) {
-      print("❌ Error en loginPaciente: $e");
+      print("❌ Excepción en loginPaciente: $e");
       return null;
     }
   }
@@ -63,32 +77,46 @@ class AuthService {
         body: jsonEncode({'email': email, 'password': password}),
       );
 
+      print("📡 Respuesta cruda loginMedico (${res.statusCode}): ${res.body}");
+
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
+
+        if (data['access_token'] == null) {
+          print("❌ Backend no devolvió access_token en loginMedico");
+          return null;
+        }
 
         // ✅ aceptar tanto si viene plano como si viene dentro de "medico"
         final medico = data['medico'] ?? {};
 
         final medicoId =
             data['medico_id']?.toString() ?? medico['id']?.toString();
-        final fullName = data['full_name'] ?? medico['full_name'];
-        final tipo = data['tipo'] ?? medico['tipo'] ?? "medico";
+        final fullName = data['full_name'] ?? medico['full_name'] ?? "Médico";
+
+        if (medicoId == null) {
+          print("❌ Backend no devolvió medico_id");
+          return null;
+        }
 
         await saveToken("auth_token_medico", data['access_token']);
 
-        return {
+        final result = {
           "access_token": data['access_token'],
           "medico_id": medicoId,
           "full_name": fullName,
-          "tipo": tipo,
+          "tipo": data['tipo'] ?? medico['tipo'] ?? "medico",
           "validado": medico['validado'] ?? true,
         };
+
+        print("✅ loginMedico parseado: $result");
+        return result;
       } else {
         print("❌ Error backend loginMedico: ${res.statusCode} - ${res.body}");
         return null;
       }
     } catch (e) {
-      print("❌ Error en loginMedico: $e");
+      print("❌ Excepción en loginMedico: $e");
       return null;
     }
   }
@@ -126,20 +154,25 @@ class AuthService {
         }),
       );
 
+      print("📡 Respuesta cruda registerPaciente (${res.statusCode}): ${res.body}");
+
       if (res.statusCode == 200 || res.statusCode == 201) {
         final data = jsonDecode(res.body);
+
         await saveToken("auth_token", data['access_token']);
-        return {
+        final result = {
           "access_token": data['access_token'],
           "user_id": data['user']['id'].toString(),
           "full_name": data['user']['full_name'],
         };
+        print("✅ registerPaciente parseado: $result");
+        return result;
       } else {
         print("❌ Error backend registerPaciente: ${res.body}");
         return null;
       }
     } catch (e) {
-      print("❌ Error en registerPaciente: $e");
+      print("❌ Excepción en registerPaciente: $e");
       return null;
     }
   }
@@ -183,13 +216,15 @@ class AuthService {
         }),
       );
 
+      print("📡 Respuesta cruda registerMedico (${res.statusCode}): ${res.body}");
+
       final data = jsonDecode(res.body);
 
       if (res.statusCode == 200 || res.statusCode == 201) {
         await saveToken("auth_token_medico", data['access_token'] ?? "");
         final medico = data['medico'];
 
-        return {
+        final result = {
           "ok": data["ok"] ?? true,
           "mensaje": data["mensaje"] ??
               "Cuenta creada correctamente. Revisa tu correo para activarla.",
@@ -199,6 +234,8 @@ class AuthService {
           "tipo": medico?['tipo'] ?? tipo,
           "validado": medico?['validado'] ?? false,
         };
+        print("✅ registerMedico parseado: $result");
+        return result;
       } else {
         print("❌ Error backend registerMedico: ${res.body}");
         return {
@@ -207,7 +244,7 @@ class AuthService {
         };
       }
     } catch (e) {
-      print("❌ Error en registerMedico: $e");
+      print("❌ Excepción en registerMedico: $e");
       return {"ok": false, "detail": "Error de conexión: $e"};
     }
   }

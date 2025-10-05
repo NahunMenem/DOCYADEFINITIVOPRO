@@ -1,14 +1,56 @@
 import 'dart:convert';
 import 'dart:ui';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
-import '../widgets/docya_snackbar.dart'; // 👈 agregado
+import '../widgets/docya_snackbar.dart'; 
 import 'package:docya_pro/screens/chat_medico_screen.dart';
 import 'package:docya_pro/screens/certificado_screen.dart';
 import 'package:docya_pro/screens/receta_screen.dart';
 import 'package:docya_pro/screens/historia_clinica_screen.dart';
+
+// ===================================================
+// 📍 Servicio de ubicación del médico
+// ===================================================
+class UbicacionMedicoManager {
+  final int medicoId;
+  final String baseUrl;
+  Timer? _timer;
+
+  UbicacionMedicoManager({required this.medicoId, required this.baseUrl});
+
+  void start() {
+    Geolocator.requestPermission();
+
+    _timer = Timer.periodic(const Duration(seconds: 5), (_) async {
+      try {
+        final pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        );
+
+        final body = jsonEncode({
+          "lat": pos.latitude,
+          "lng": pos.longitude,
+          "disponible": false,
+        });
+
+        await http.post(
+          Uri.parse("$baseUrl/medico/$medicoId/ubicacion"),
+          headers: {"Content-Type": "application/json"},
+          body: body,
+        );
+      } catch (e) {
+        print("❌ Error ubicacion: $e");
+      }
+    });
+  }
+
+  void stop() {
+    _timer?.cancel();
+  }
+}
 
 //
 // ==================== PANTALLA PRINCIPAL ====================
@@ -25,6 +67,7 @@ class MedicoEnCasaScreen extends StatefulWidget {
   final String telefono;
   final double lat;
   final double lng;
+  final UbicacionMedicoManager? ubicacionManager; // 👈 agregado
 
   const MedicoEnCasaScreen({
     super.key,
@@ -38,6 +81,7 @@ class MedicoEnCasaScreen extends StatefulWidget {
     required this.telefono,
     required this.lat,
     required this.lng,
+    this.ubicacionManager,
   });
 
   @override
@@ -50,12 +94,14 @@ class _MedicoEnCasaScreenState extends State<MedicoEnCasaScreen>
   bool _consultaIniciada = false;
   bool _puedeIniciar = false;
   double? _distancia;
+  UbicacionMedicoManager? _ubicacionManager;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _chequearUbicacion();
+    _ubicacionManager = widget.ubicacionManager;
   }
 
   Future<void> _chequearUbicacion() async {
@@ -120,6 +166,9 @@ class _MedicoEnCasaScreenState extends State<MedicoEnCasaScreen>
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"medico_id": widget.medicoId}));
     if (resp.statusCode == 200 && mounted) {
+      // 👇 detener envío de ubicación
+      _ubicacionManager?.stop();
+
       Navigator.pop(context);
       DocYaSnackbar.show(
         context,

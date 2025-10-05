@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:geolocator/geolocator.dart';
 
 import '../screens/MedicoEnCasaScreen.dart';
 import '../screens/EnfermeroEnCasaScreen.dart';
@@ -259,6 +260,13 @@ Future<bool?> mostrarConsultaEntrante(BuildContext context, String profesionalId
                                 );
 
                                 if (resp.statusCode == 200) {
+                                  // 👇 Arranca el envío de ubicación
+                                  final ubicacionManager = UbicacionMedicoManager(
+                                    medicoId: int.parse(profesionalId),
+                                    baseUrl: "https://docya-railway-production.up.railway.app",
+                                  );
+                                  ubicacionManager.start();
+
                                   if (context.mounted) {
                                     Navigator.of(context, rootNavigator: true).pop(true);
 
@@ -339,4 +347,45 @@ Future<bool?> mostrarConsultaEntrante(BuildContext context, String profesionalId
   });
 
   return result;
+}
+
+// ===================================================
+// 📍 Servicio de ubicación del médico
+// ===================================================
+class UbicacionMedicoManager {
+  final int medicoId;
+  final String baseUrl;
+  Timer? _timer;
+
+  UbicacionMedicoManager({required this.medicoId, required this.baseUrl});
+
+  void start() {
+    Geolocator.requestPermission();
+
+    _timer = Timer.periodic(const Duration(seconds: 5), (_) async {
+      try {
+        final pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        );
+
+        final body = jsonEncode({
+          "lat": pos.latitude,
+          "lng": pos.longitude,
+          "disponible": false,
+        });
+
+        await http.post(
+          Uri.parse("$baseUrl/medico/$medicoId/ubicacion"),
+          headers: {"Content-Type": "application/json"},
+          body: body,
+        );
+      } catch (e) {
+        print("❌ Error ubicacion: $e");
+      }
+    });
+  }
+
+  void stop() {
+    _timer?.cancel();
+  }
 }

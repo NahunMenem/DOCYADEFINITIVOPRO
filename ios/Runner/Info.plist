@@ -2,8 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>DocYapro</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -11,24 +15,53 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>DocYa Pro</string>
+	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<true/>
+	<key>GMSApiKey</key>
+	<string>TU_API_KEY_CORRECTA</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>DocYa necesita acceder a la cámara para tomar una foto de tu DNI.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>DocYa necesita tu ubicación en segundo plano para brindarte atención médica.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>DocYa necesita tu ubicación para funcionar correctamente.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>DocYa necesita tu ubicación para mostrar médicos cercanos.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>DocYa necesita acceder al micrófono para videollamadas o grabaciones.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>DocYa necesita acceder a tu galería para adjuntar una foto de tu DNI.</string>
+	<key>NSUserNotificationUsageDescription</key>
+	<string>DocYa necesita enviar notificaciones para avisarte sobre consultas y mensajes.</string>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+		<string>location</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
-	<key>UIRequiredDeviceCapabilities</key>
-	<array>
-		<string>armv7</string>
-	</array>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
@@ -39,41 +72,7 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-
-	<!-- 🚀 Firebase configuración -->
-	<key>FirebaseAppDelegateProxyEnabled</key>
-	<true/>
-
-	<!-- 🔔 Notificaciones -->
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>fetch</string>
-		<string>remote-notification</string>
-	</array>
-
-	<!-- 📍 Permisos de ubicación -->
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Necesitamos tu ubicación para mostrar médicos cercanos.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>La app necesita tu ubicación para asignarte médicos en tiempo real.</string>
-
-	<!-- 📷 Cámara -->
-	<key>NSCameraUsageDescription</key>
-	<string>Necesitamos acceso a la cámara para que subas tu foto de perfil o captures imágenes.</string>
-
-	<!-- 🖼 Fotos -->
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Necesitamos acceso a tu galería para que elijas imágenes.</string>
-
-	<!-- 🎙 Micrófono -->
-	<key>NSMicrophoneUsageDescription</key>
-	<string>El micrófono se usará en futuras consultas por voz o video.</string>
-
-	<!-- 🌐 Internet -->
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
-	</dict>
+	<key>aps-environment</key>
+	<string>development</string>
 </dict>
 </plist>
